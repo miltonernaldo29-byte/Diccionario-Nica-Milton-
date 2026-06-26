@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traductor Nica Milton</title>
+    <!-- Cargar React y ReactDOM desde CDN para evitar instalaciones complejas -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <!-- Cargar Babel para compilar JSX en el navegador -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Cargar Tailwind CSS para un diseño premium -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-900 via-blue-900 to-slate-900 min-h-screen flex items-center justify-center p-4">
+
+    <div id="root" class="w-full max-w-3xl"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        const App = () => {
+            const [inputText, setInputText] = useState('');
+            const [translationMode, setTranslationMode] = useState('nicaToStandard'); 
+            const [translation, setTranslation] = useState(null);
+            const [isLoading, setIsLoading] = useState(false);
+            const [error, setError] = useState(null);
+
+            const translateText = async () => {
+                if (!inputText.trim()) {
+                    setError('Por favor, ingresa algún texto para traducir.');
+                    setTranslation(null);
+                    return;
+                }
+
+                setIsLoading(true);
+                setError(null);
+                setTranslation(null);
+
+                let prompt = '';
+                
+                if (translationMode === 'nicaToStandard') {
+                    prompt = `Traduce el siguiente texto en Español Nicaragüense (que contiene jergas, modismos, regionalismos o lenguaje informal de Nicaragua) a un español estándar neutro y comprensible.
+                    Identifica y explica detalladamente cada término o frase nicaragüense utilizada.
+                    
+                    Texto Original: "${inputText}"
+                    
+                    Devuelve la respuesta estrictamente como un objeto JSON con esta estructura:
+                    {
+                        "translatedText": "Texto traducido al español estándar neutro",
+                        "terms": [
+                            {
+                                "term": "Palabra o frase nica identificada",
+                                "explanation": "Explicación clara de su significado y contexto en el Español Nicaragüense"
+                            }
+                        ]
+                    }`;
+                } else if (translationMode === 'nicaToEnglish') {
+                    prompt = `Translate the following Nicaraguan Spanish text (with local slang, idioms, or regionalisms) into natural, equivalent English.
+                    Provide both a natural translation and, where possible, equivalent English slang/idioms. Also, identify and explain the Nicaraguan terms in English.
+                    
+                    Original Text: "${inputText}"
+                    
+                    Return the response strictly as a JSON object with this structure:
+                    {
+                        "translatedText": "Natural English translation",
+                        "terms": [
+                            {
+                                "term": "Nicaraguan word or phrase identified",
+                                "explanation": "Clear explanation of its meaning and equivalent in English"
+                            }
+                        ]
+                    }`;
+                } else if (translationMode === 'standardToNica') {
+                    prompt = `Traduce el siguiente texto en español estándar o formal a un Español Nicaragüense coloquial y natural, incorporando adecuadamente jergas, modismos y regionalismos de Nicaragua (¡Nicanízalo de forma auténtica!).
+                    Explica las principales expresiones o cambios que agregaste para que el usuario entienda cómo se adaptó.
+                    
+                    Texto Original: "${inputText}"
+                    
+                    Devuelve la respuesta estrictamente como un objeto JSON con esta estructura:
+                    {
+                        "translatedText": "Texto adaptado al Español Nicaragüense coloquial de forma natural",
+                        "terms": [
+                            {
+                                "term": "Jerga o modismo nica introducido",
+                                "explanation": "Significado de la expresión y por qué se usó en este contexto"
+                            }
+                        ]
+                    }`;
+                } else if (translationMode === 'usSlangToSpanish') {
+                    prompt = `Traduce el siguiente texto en inglés de EE.UU. (que contiene jergas americanas (slang), modismos (idioms), lenguaje informal o regionalismos estadounidenses) a su equivalente más natural en español.
+                    Puedes dar el equivalente tanto en español estándar como en Español Nicaragüense si existe un modismo similar.
+                    Identifica y explica cada término informal en inglés estadounidense.
+                    
+                    Texto Original: "${inputText}"
+                    
+                    Devuelve la respuesta estrictamente como un objeto JSON con esta estructura:
+                    {
+                        "translatedText": "Traducción natural al español (puedes incluir la opción estándar y la opción nica equivalente si aplica)",
+                        "terms": [
+                            {
+                                "term": "Slang, idiom o regionalismo estadounidense identificado",
+                                "explanation": "Explicación detallada de lo que significa en EE.UU. y sus equivalentes coloquiales en español"
+                            }
+                        ]
+                    }`;
+                } else if (translationMode === 'englishToUsSlang') {
+                    prompt = `Transform the following standard English text into informal American English, rich with US slang, idioms, and natural colloquial regionalisms.
+                    Explain the slang or changes introduced so the user can learn how to speak informally in the US.
+                    
+                    Original Text: "${inputText}"
+                    
+                    Return the response strictly as a JSON object with this structure:
+                    {
+                        "translatedText": "American informal/slang translation",
+                        "terms": [
+                            {
+                                "term": "American slang or idiom introduced",
+                                "explanation": "What it means and why it was chosen for this context"
+                            }
+                        ]
+                    }`;
+                }
+
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                "translatedText": { "type": "STRING" },
+                                "terms": {
+                                    "type": "ARRAY",
+                                    "items": {
+                                        "type": "OBJECT",
+                                        "properties": {
+                                            "term": { "type": "STRING" },
+                                            "explanation": { "type": "STRING" }
+                                        },
+                                        "required": ["term", "explanation"]
+                                    }
+                                }
+                            },
+                            "required": ["translatedText", "terms"]
+                        }
+                    }
+                };
+
+                const apiKey = ""; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+                let retryCount = 0;
+                const maxRetries = 5;
+                const baseDelay = 1000;
+
+                while (retryCount < maxRetries) {
+                    try {
+                        const response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (!response.ok) {
+                            if (response.status === 429 && retryCount < maxRetries - 1) {
+                                const delay = baseDelay * Math.pow(2, retryCount) + Math.random() * 500;
+                                await new Promise(res => setTimeout(res, delay));
+                                retryCount++;
+                                continue;
+                            }
+                            throw new Error(`Error ${response.status}: ${response.statusText}`);
+                        }
+
+                        const result = await response.json();
+
+                        if (result.candidates && result.candidates.length > 0 &&
+                            result.candidates[0].content && result.candidates[0].content.parts &&
+                            result.candidates[0].content.parts.length > 0) {
+                            const jsonText = result.candidates[0].content.parts[0].text;
+                            const parsedJson = JSON.parse(jsonText);
+                            setTranslation(parsedJson);
+                        } else {
+                            setError('No se pudo procesar la traducción. Por favor intenta de nuevo.');
+                        }
+                        break;
+                    } catch (err) {
+                        if (retryCount < maxRetries - 1) {
+                            const delay = baseDelay * Math.pow(2, retryCount) + Math.random() * 500;
+                            await new Promise(res => setTimeout(res, delay));
+                            retryCount++;
+                        } else {
+                            setError(`Error al conectar con el servidor: ${err.message}`);
+                        }
+                    } finally {
+                        setIsLoading(false);
+                    }
+                }
+            };
+
+            const getPlaceholder = () => {
+                switch (translationMode) {
+                    case 'standardToNica':
+                        return 'Escribe algo formal (ej. "Hola amigo, estoy sumamente agotado y no tengo dinero")...';
+                    case 'usSlangToSpanish':
+                        return 'Escribe jerga de EE.UU. (ej. "What\'s up dude, I\'m totally broke and feeling blue")...';
+                    case 'englishToUsSlang':
+                        return 'Write standard English (e.g. "Hello my friend, I am very excited about the party")...';
+                    default:
+                        return 'Escribe en Español Nicaragüense (ej. "Ideay chele, ando bien palmado y desvelado")...';
+                }
+            };
+
+            const getLabel = () => {
+                switch (translationMode) {
+                    case 'nicaToStandard': return 'Nica ➜ Español Estándar';
+                    case 'nicaToEnglish': return 'Nica ➜ Inglés Equivalente';
+                    case 'standardToNica': return 'Español Estándar ➜ Nica';
+                    case 'usSlangToSpanish': return 'Slang EE.UU. ➜ Español (Nica/Estándar)';
+                    case 'englishToUsSlang': return 'English Estándar ➜ Slang EE.UU.';
+                    default: return 'Traductor';
+                }
+            };
+
+            return (
+                <div className="bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-full border border-gray-100 transition-all duration-300">
+                    {/* Cabezal */}
+                    <div className="text-center mb-6">
+                        <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-2 leading-tight">
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500">
+                                Traductor Nica
+                            </span>{" "}
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-600">
+                                Milton
+                            </span>
+                        </h1>
+                        <p className="text-gray-600 text-sm md:text-base font-semibold uppercase tracking-wider">
+                            Spanish & English Colloquial Bridge
+                        </p>
+                        <p className="text-gray-500 text-xs md:text-sm mt-1">
+                            Traduce jergas, modismos, regionalismos y lenguaje informal de EE.UU. y del Español Nicaragüense.
+                        </p>
+                    </div>
+
+                    {/* Sección de Selección de Modos */}
+                    <div className="mb-6">
+                        <label className="block text-gray-700 font-bold mb-2 text-center text-xs uppercase tracking-widest">
+                            Selecciona la Dirección de Traducción
+                        </label>
+                        
+                        <div className="space-y-3">
+                            {/* Grupo Español Nicaragüense */}
+                            <div className="bg-blue-50/50 p-2.5 rounded-xl border border-blue-100">
+                                <span className="block text-[10px] font-extrabold text-blue-800 uppercase tracking-wider mb-1 px-1">
+                                    Español Nicaragüense & Estándar
+                                </span>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
+                                    <button
+                                        onClick={() => { setTranslationMode('nicaToStandard'); setTranslation(null); }}
+                                        className={`py-2 px-3 rounded-lg font-bold text-xs transition-all duration-200 ${
+                                            translationMode === 'nicaToStandard'
+                                                ? 'bg-blue-600 text-white shadow-sm'
+                                                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                                        }`}
+                                    >
+                                        Nica ➜ Estándar
+                                    </button>
+                                    <button
+                                        onClick={() => { setTranslationMode('nicaToEnglish'); setTranslation(null); }}
+                                        className={`py-2 px-3 rounded-lg font-bold text-xs transition-all duration-200 ${
+                                            translationMode === 'nicaToEnglish'
+                                                ? 'bg-blue-600 text-white shadow-sm'
+                                                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                                        }`}
+                                    >
+                                        Nica ➜ Inglés
+                                    </button>
+                                    <button
+                                        onClick={() => { setTranslationMode('standardToNica'); setTranslation(null); }}
+                                        className={`py-2 px-3 rounded-lg font-bold text-xs transition-all duration-200 ${
+                                            translationMode === 'standardToNica'
+                                                ? 'bg-emerald-600 text-white shadow-sm'
+                                                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                                        }`}
+                                    >
+                                        Estándar ➜ Nica
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Grupo Inglés Coloquial / Slang EE.UU. */}
+                            <div className="bg-purple-50/50 p-2.5 rounded-xl border border-purple-100">
+                                <span className="block text-[10px] font-extrabold text-purple-800 uppercase tracking-wider mb-1 px-1">
+                                    Slang, Idioms & Regionalismos EE.UU.
+                                </span>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                    <button
+                                        onClick={() => { setTranslationMode('usSlangToSpanish'); setTranslation(null); }}
+                                        className={`py-2 px-3 rounded-lg font-bold text-xs transition-all duration-200 ${
+                                            translationMode === 'usSlangToSpanish'
+                                                ? 'bg-purple-600 text-white shadow-sm'
+                                                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                                        }`}
+                                    >
+                                        🇺🇸 Slang EE.UU. ➜ Español (Nica / Estándar)
+                                    </button>
+                                    <button
+                                        onClick={() => { setTranslationMode('englishToUsSlang'); setTranslation(null); }}
+                                        className={`py-2 px-3 rounded-lg font-bold text-xs transition-all duration-200 ${
+                                            translationMode === 'englishToUsSlang'
+                                                ? 'bg-purple-600 text-white shadow-sm'
+                                                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                                        }`}
+                                    >
+                                        English Estándar ➜ 🇺🇸 Slang EE.UU.
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Campo de Entrada de Texto */}
+                    <div className="mb-4">
+                        <textarea
+                            className="w-full p-4 md:p-5 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 text-base md:text-lg resize-y min-h-[110px] max-h-[250px] placeholder-gray-400"
+                            placeholder={getPlaceholder()}
+                            value={inputText}
+                            onChange={(e) => setInputText(e.target.value)}
+                            rows="4"
+                        ></textarea>
+                    </div>
+
+                    {/* Botón de Envío */}
+                    <button
+                        onClick={translateText}
+                        disabled={isLoading}
+                        className={`w-full py-3.5 px-6 rounded-lg text-white font-bold text-lg md:text-xl shadow-lg transition-all duration-300 transform
+                            ${
+                                isLoading
+                                    ? 'bg-gray-400 cursor-not-allowed animate-pulse'
+                                    : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:scale-[1.02] active:scale-[0.98]'
+                            } flex items-center justify-center`}
+                    >
+                        {isLoading ? (
+                            <>
+                                <svg className="animate-spin -ml-1 mr-3 h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Traduciendo modismos...
+                            </>
+                        ) : (
+                            `Traducir en Modo: ${getLabel()}`
+                        )}
+                    </button>
+
+                    {error && (
+                        <div className="mt-5 p-4 bg-red-50 border border-red-300 text-red-700 rounded-lg text-sm md:text-base font-medium animate-fade-in">
+                            <p className="font-bold mb-1">Error de procesamiento:</p>
+                            <p>{error}</p>
+                        </div>
+                    )}
+
+                    {/* Resultados de la Traducción */}
+                    {translation && (
+                        <div className="mt-6 pt-5 border-t border-gray-200">
+                            <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-3 text-center">Traducción e Interpretación</h2>
+
+                            {/* Cuadro de Traducción Principal */}
+                            <div className={`p-4 md:p-5 rounded-xl mb-4 shadow-sm border ${
+                                translationMode.includes('Nica') || translationMode === 'standardToNica'
+                                    ? 'bg-emerald-50/70 border-emerald-100' 
+                                    : 'bg-indigo-50/70 border-indigo-100'
+                            }`}>
+                                <h3 className={`text-sm font-bold mb-1 uppercase tracking-wide ${
+                                    translationMode.includes('Nica') || translationMode === 'standardToNica'
+                                        ? 'text-emerald-800' 
+                                        : 'text-indigo-800'
+                                }`}>
+                                    Texto Traducido / Adaptado:
+                                </h3>
+                                <p className="text-gray-800 text-base md:text-lg leading-relaxed font-medium">
+                                    {translation.translatedText}
+                                </p>
+                            </div>
+
+                            {/* Desglose de Vocabulario y Explicación de Jerga */}
+                            {translation.terms && translation.terms.length > 0 && (
+                                <div className="bg-amber-50/60 p-4 md:p-5 rounded-xl shadow-sm border border-amber-200">
+                                    <h3 className="text-sm font-bold text-amber-900 mb-3 uppercase tracking-wide">
+                                        Análisis de Vocabulario & Modismos Clave:
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {translation.terms.map((termObj, index) => (
+                                            <div key={index} className="border-b border-amber-100/70 pb-2.5 last:border-none last:pb-0">
+                                                <p className="font-extrabold text-amber-950 text-sm md:text-base">
+                                                    💡 {termObj.term}
+                                                </p>
+                                                <p className="text-gray-700 text-xs md:text-sm mt-0.5 leading-relaxed pl-4">
+                                                    {termObj.explanation}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

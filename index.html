@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traductor Nica Milton - Premium v2.8</title>
+    <!-- Cargar React y ReactDOM de forma estable -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <!-- Cargar Babel Standalone estable -->
+    <script src="https://unpkg.com/@babel/standalone@7.23.10/babel.min.js"></script>
+    <!-- Tailwind CSS para diseño premium -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Iconos Phosphor para detalles de interfaz -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-950 min-h-screen flex items-center justify-center p-3 sm:p-6">
+
+    <div id="root" class="w-full max-w-2xl"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const App = () => {
+            const [inputText, setInputText] = useState('');
+            const [translationMode, setTranslationMode] = useState('nicaToStandard'); 
+            const [translation, setTranslation] = useState(null);
+            const [isLoading, setIsLoading] = useState(false);
+            const [isSpeaking, setIsSpeaking] = useState(false);
+            const [error, setError] = useState(null);
+            
+            // TU API KEY INTEGRADA PARA EL PÚBLICO
+            const API_KEY = "AQ.Ab8RN6JikQTHMa7I9sMXHUj-C_DbEAZQFaiCZtseucow8VWNgQ";
+
+            // GESTIÓN PREMIUM
+            const [isPremiumUnlocked, setIsPremiumUnlocked] = useState(false);
+            const [pinInput, setPinInput] = useState('');
+            const [pinError, setPinError] = useState(false);
+
+            const SECRET_MASTER_PIN = "MILTON2026";
+            
+            // TU NÚMERO DE WHATSAPP REAL ACTUALIZADO
+            const WHATSAPP_NUMBER = "50582617798"; 
+            const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=Hola%20Milton,%20quiero%20comprar%20el%20PIN%20Premium%20para%20el%20Traductor%20Nica`;
+
+            // Cargar estado premium al iniciar si ya se ingresó antes
+            useEffect(() => {
+                const savedPin = localStorage.getItem('nica_translator_premium_pin');
+                if (savedPin === SECRET_MASTER_PIN) {
+                    setIsPremiumUnlocked(true);
+                }
+            }, []);
+
+            // Activar el pin premium
+            const handleUnlockPremium = () => {
+                if (pinInput.trim() === SECRET_MASTER_PIN) {
+                    localStorage.setItem('nica_translator_premium_pin', SECRET_MASTER_PIN);
+                    setIsPremiumUnlocked(true);
+                    setPinError(false);
+                } else {
+                    setPinError(true);
+                }
+            };
+
+            // Cerrar sesión premium
+            const handleLockPremium = () => {
+                localStorage.removeItem('nica_translator_premium_pin');
+                setIsPremiumUnlocked(false);
+                setPinInput('');
+                setTranslation(null);
+            };
+
+            // Validar si el modo seleccionado requiere premium
+            const isModeLocked = (mode) => {
+                const premiumModes = ['usSlangToSpanish', 'englishToUsSlang'];
+                return premiumModes.includes(mode) && !isPremiumUnlocked;
+            };
+
+            // REPRODUCTOR DE AUDIO NATIVO Y SEGURO (Evita pantallas azules)
+            const playTranslationAudio = (textToSpeak) => {
+                if (!isPremiumUnlocked) return;
+                
+                // Cancelar cualquier reproducción anterior
+                window.speechSynthesis.cancel();
+
+                const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                
+                // Si estamos traduciendo a Slang o es inglés, que hable en Inglés Americano (en-US)
+                if (translationMode === 'englishToUsSlang' || translationMode === 'usSlangToSpanish') {
+                    utterance.lang = 'en-US';
+                } else {
+                    utterance.lang = 'es-NI'; // Español nica/latino por defecto
+                }
+
+                utterance.onstart = () => setIsSpeaking(true);
+                utterance.onend = () => setIsSpeaking(false);
+                utterance.onerror = () => setIsSpeaking(false);
+
+                window.speechSynthesis.speak(utterance);
+            };
+
+            const translateText = async () => {
+                if (isModeLocked(translationMode)) {
+                    setError('Este modo requiere una cuenta Premium activa.');
+                    return;
+                }
+
+                if (!inputText.trim()) {
+                    setError('Por favor, ingresa algún texto para traducir.');
+                    setTranslation(null);
+                    return;
+                }
+
+                setIsLoading(true);
+                setError(null);
+                setTranslation(null);
+
+                let prompt = '';
+                if (translationMode === 'nicaToStandard') {
+                    prompt = `Traduce el siguiente texto en Español Nicaragüense a un español estándar neutro. Identifica y explica detalladamente cada término nicaragüense. Texto Original: "${inputText}" Devuelve estricto JSON: {"translatedText": "...", "terms": [{"term": "...", "explanation": "..."}]}`;
+                } else if (translationMode === 'standardToNica') {
+                    prompt = `Traduce el siguiente texto en español estándar a un Español Nicaragüense coloquial y natural de forma auténtica. Texto Original: "${inputText}" Devuelve estricto JSON: {"translatedText": "...", "terms": [{"term": "...", "explanation": "..."}]}`;
+                } else if (translationMode === 'nicaToEnglish') {
+                    prompt = `Translate the following Nicaraguan Spanish text into natural English. Identify and explain terms in English. Original Text: "${inputText}" Devuelve estricto JSON: {"translatedText": "...", "terms": [{"term": "...", "explanation": "..."}]}`;
+                } else if (translationMode === 'usSlangToSpanish') {
+                    prompt = `Traduce el siguiente texto en inglés de EE.UU. (slang/idioms) a su equivalente más natural en español coloquial o nica. Texto Original: "${inputText}" Devuelve estricto JSON: {"translatedText": "...", "terms": [{"term": "...", "explanation": "..."}]}`;
+                } else if (translationMode === 'englishToUsSlang') {
+                    prompt = `Transform the following standard English text into informal American English with heavy US slang. Original Text: "${inputText}" Devuelve estricto JSON: {"translatedText": "...", "terms": [{"term": "...", "explanation": "..."}]}`;
+                }
+
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                "translatedText": { "type": "STRING" },
+                                "terms": {
+                                    type: "ARRAY",
+                                    items: {
+                                        type: "OBJECT",
+                                        properties: {
+                                            term: { type: "STRING" },
+                                            explanation: { type: "STRING" }
+                                        },
+                                        required: ["term", "explanation"]
+                                    }
+                                }
+                            },
+                            required: ["translatedText", "terms"]
+                        }
+                    }
+                };
+
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error(`Error de conexión con el servidor de traducción.`);
+                    const result = await response.json();
+                    if (result.candidates && result.candidates[0]?.content?.parts[0]?.text) {
+                        const cleanedText = result.candidates[0].content.parts[0].text.replace(/```json|```/g, '');
+                        setTranslation(JSON.parse(cleanedText));
+                    } else {
+                        setError('No se pudo procesar la traducción.');
+                    }
+                } catch (err) {
+                    setError(err.message || 'Error de red.');
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            const getPlaceholder = () => {
+                if (isModeLocked(translationMode)) return "🔒 Desbloquea el Módulo Americano Premium para usar esta función...";
+                if (translationMode === 'standardToNica') return 'Escribe algo formal (ej. "Hola amigo, no tengo dinero")...';
+                if (translationMode === 'usSlangToSpanish') return 'Escribe jerga de EE.UU. (ej. "I\'m totally broke")...';
+                if (translationMode === 'nicaToEnglish') return 'Escribe en nica para pasarlo a inglés (ej. "Ese maje es bien tuani")...';
+                return 'Escribe en Español Nicaragüense (ej. "Ideay chele, ando palmado")...';
+            };
+
+            return (
+                <div className="bg-slate-900/90 border border-slate-800 p-5 md:p-8 rounded-2xl shadow-2xl w-full text-white backdrop-blur-md transition-all duration-300 relative">
+                    
+                    {/* Encabezado */}
+                    <div className="flex justify-between items-start mb-6">
+                        <div className="text-left">
+                            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight">
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">Traductor Nica</span>{" "}
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-amber-400">Milton v2.8</span>
+                            </h1>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Cultura Nicaragüense & Internacional</span>
+                                {isPremiumUnlocked ? (
+                                    <span className="bg-amber-500/20 text-amber-400 border border-amber-500/40 text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider flex items-center gap-1">
+                                        ⭐ Slang & Voz Activo <button onClick={handleLockPremium} className="text-rose-400 underline ml-1 text-[9px]">(Cerrar)</button>
+                                    </span>
+                                ) : (
+                                    <span className="bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase">Acceso Nica Libre</span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Selector de Modos Libres */}
+                    <div className="space-y-3 mb-4">
+                        <div className="bg-slate-950/50 p-3 rounded-xl border border-slate-800">
+                            <span className="block text-[10px] font-extrabold text-blue-400 uppercase tracking-widest mb-2">Diccionarios del Canal (100% Gratis)</span>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                <button onClick={() => { setTranslationMode('nicaToStandard'); setTranslation(null); setError(null); }} className={`py-2 px-3 rounded-lg font-bold text-xs transition ${translationMode === 'nicaToStandard' ? 'bg-blue-600 text-white' : 'bg-slate-900 text-slate-400 border border-slate-800'}`}>Nica ➜ Estándar</button>
+                                <button onClick={() => { setTranslationMode('standardToNica'); setTranslation(null); setError(null); }} className={`py-2 px-3 rounded-lg font-bold text-xs transition ${translationMode === 'standardToNica' ? 'bg-blue-600 text-white' : 'bg-slate-900 text-slate-400 border border-slate-800'}`}>Estándar ➜ Nica</button>
+                                <button onClick={() => { setTranslationMode('nicaToEnglish'); setTranslation(null); setError(null); }} className={`py-2 px-3 rounded-lg font-bold text-xs transition ${translationMode === 'nicaToEnglish' ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-slate-400 border border-slate-800'}`}>🇳🇮 Nica ➜ Inglés 🇬🇧</button>
+                            </div>
+                        </div>
+
+                        {/* Selector de Modos Premium */}
+                        <div className="bg-slate-950/50 p-3 rounded-xl border border-slate-800">
+                            <span className="block text-[10px] font-extrabold text-amber-400 uppercase tracking-widest mb-2 flex items-center gap-1">
+                                <i className="ph-bold ph-crown text-amber-400"></i> Módulos Slang Americano & Audio Pronunciación (Premium)
+                            </span>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <button onClick={() => { setTranslationMode('usSlangToSpanish'); setTranslation(null); setError(null); }} className={`py-2 px-2 rounded-lg font-bold text-xs transition flex items-center justify-center gap-1 ${translationMode === 'usSlangToSpanish' ? 'bg-amber-600 text-white' : 'bg-slate-900 text-slate-400 border border-slate-800'}`}>
+                                    {isModeLocked('usSlangToSpanish') && <i className="ph-bold ph-lock text-[11px] text-amber-400"></i>} 🇺🇸 Slang EE.UU. ➜ Español
+                                </button>
+                                <button onClick={() => { setTranslationMode('englishToUsSlang'); setTranslation(null); setError(null); }} className={`py-2 px-2 rounded-lg font-bold text-xs transition flex items-center justify-center gap-1 ${translationMode === 'englishToUsSlang' ? 'bg-amber-600 text-white' : 'bg-slate-900 text-slate-400 border border-slate-800'}`}>
+                                    {isModeLocked('englishToUsSlang') && <i className="ph-bold ph-lock text-[11px] text-amber-400"></i>} Inglés Estándar ➜ 🇺🇸 Slang
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Cuadro de bloqueo visual si no es premium */}
+                    {isModeLocked(translationMode) ? (
+                        <div className="bg-slate-950 border border-amber-900/60 p-6 rounded-xl text-center space-y-4 mb-4 fade-in">
+                            <i className="ph-bold ph-lock-key text-4xl text-amber-400 animate-bounce"></i>
+                            <h3 className="font-bold text-base text-amber-300">¡Módulo Slang & Audio Pronunciación Bloqueado!</h3>
+                            <p className="text-xs text-slate-400 max-w-md mx-auto">Aprender a traducir modismos callejeros de Estados Unidos, dominar el inglés informal y **escuchar la pronunciación con voz nativa** requiere activación Premium. Adquiere tu PIN mensual de forma rápida y segura.</p>
+                            
+                            <div className="bg-slate-900 p-3 rounded-lg max-w-xs mx-auto border border-slate-800 space-y-2">
+                                <input 
+                                    type="text" 
+                                    value={pinInput} 
+                                    onChange={(e) => setPinInput(e.target.value)} 
+                                    placeholder="Introduce tu PIN Premium" 
+                                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-white text-center text-xs focus:outline-none uppercase"
+                                />
+                                <button onClick={handleUnlockPremium} className="w-full py-1.5 bg-amber-600 hover:bg-amber-500 rounded-lg text-white font-bold text-xs transition">Activar Mi Acceso</button>
+                                {pinError && <p className="text-rose-400 text-[10px] font-semibold mt-1">⚠️ PIN Incorrecto.</p>}
+                            </div>
+
+                            <div className="pt-2">
+                                <a 
+                                    href={WHATSAPP_LINK}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-xs font-bold transition shadow-lg"
+                                >
+                                    <i className="ph-bold ph-whatsapp-logo text-sm"></i> Solicitar PIN a Milton por WhatsApp (C$50)
+                                </a>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="mb-4 fade-in">
+                            <textarea
+                                className="w-full p-4 bg-slate-950 border-2 border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition text-sm sm:text-base resize-none min-h-[110px]"
+                                placeholder={getPlaceholder()}
+                                value={inputText}
+                                onChange={(e) => setInputText(e.target.value)}
+                                rows="4"
+                            ></textarea>
+                        </div>
+                    )}
+
+                    {/* Botón Traducir */}
+                    <button
+                        onClick={translateText}
+                        disabled={isLoading || isModeLocked(translationMode)}
+                        className={`w-full py-3.5 rounded-xl font-bold text-sm shadow-lg transition transform active:scale-[0.99]
+                            ${isLoading || isModeLocked(translationMode) ? 'bg-slate-800 cursor-not-allowed text-slate-500' : 'bg-gradient-to-r from-blue-600 via-teal-600 to-emerald-600 text-white'}`}
+                    >
+                        {isLoading ? "Analizando modismos con IA..." : "Procesar Traducción Inteligente"}
+                    </button>
+
+                    {/* Errores */}
+                    {error && (
+                        <div className="mt-4 p-3 bg-red-950/40 border border-red-900 text-red-300 rounded-xl text-xs font-medium fade-in">
+                            <p className="font-bold">⚠️ Nota del Sistema:</p>
+                            <p>{error}</p>
+                        </div>
+                    )}
+
+                    {/* Resultados Elegantes */}
+                    {translation && (
+   

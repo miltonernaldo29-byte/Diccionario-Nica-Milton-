@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traductor Nica Milton - Premium v3.0</title>
+    <!-- Tailwind CSS para diseño de alta calidad -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-950 min-h-screen flex items-center justify-center p-3 sm:p-6">
+
+    <div class="w-full max-w-2xl bg-slate-900/90 border border-slate-800 p-5 md:p-8 rounded-2xl shadow-2xl text-white backdrop-blur-md relative">
+        
+        <!-- Encabezado -->
+        <div class="flex justify-between items-start mb-6">
+            <div class="text-left">
+                <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight">
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">Traductor Nica</span> 
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-amber-400">Milton v3.0</span>
+                </h1>
+                <div class="flex items-center gap-2 mt-1">
+                    <span class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Cultura Nicaragüense & Internacional</span>
+                    <span id="premiumBadge" class="bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase">Acceso Nica Libre</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Selector de Modos Libres -->
+        <div class="space-y-3 mb-4">
+            <div class="bg-slate-950/50 p-3 rounded-xl border border-slate-800">
+                <span class="block text-[10px] font-extrabold text-blue-400 uppercase tracking-widest mb-2">Diccionarios (100% Gratis)</span>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2" id="freeModesContainer">
+                    <button onclick="changeMode('nicaToStandard')" id="btn-nicaToStandard" class="mode-btn py-2 px-3 rounded-lg font-bold text-xs transition bg-blue-600 text-white">Nica ➜ Estándar</button>
+                    <button onclick="changeMode('standardToNica')" id="btn-standardToNica" class="mode-btn py-2 px-3 rounded-lg font-bold text-xs transition bg-slate-900 text-slate-400 border border-slate-800">Estándar ➜ Nica</button>
+                    <button onclick="changeMode('nicaToEnglish')" id="btn-nicaToEnglish" class="mode-btn py-2 px-3 rounded-lg font-bold text-xs transition bg-slate-900 text-slate-400 border border-slate-800">🇳🇮 Nica ➜ Inglés 🇬🇧</button>
+                </div>
+            </div>
+
+            <!-- Selector de Modos Premium -->
+            <div class="bg-slate-950/50 p-3 rounded-xl border border-slate-800">
+                <span class="block text-[10px] font-extrabold text-amber-400 uppercase tracking-widest mb-2">Módulos Slang Americano & Audio Pronunciación (Premium)</span>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button onclick="changeMode('usSlangToSpanish')" id="btn-usSlangToSpanish" class="mode-btn py-2 px-2 rounded-lg font-bold text-xs transition bg-slate-900 text-slate-400 border border-slate-800">🇺🇸 Slang EE.UU. ➜ Español</button>
+                    <button onclick="changeMode('englishToUsSlang')" id="btn-englishToUsSlang" class="mode-btn py-2 px-2 rounded-lg font-bold text-xs transition bg-slate-900 text-slate-400 border border-slate-800">Inglés Estándar ➜ 🇺🇸 Slang</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Área de Entrada de Texto / Bloqueo Premium -->
+        <div id="inputAreaContainer" class="mb-4">
+            <textarea id="inputText" class="w-full p-4 bg-slate-950 border-2 border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition text-sm sm:text-base resize-none min-h-[110px]" placeholder="Escribe en Español Nicaragüense (ej. 'Ideay chele, ando palmado')..."></textarea>
+        </div>
+
+        <!-- Botón de Acción Principal -->
+        <button id="actionBtn" onclick="translateText()" class="w-full py-3.5 rounded-xl font-bold text-sm shadow-lg transition transform active:scale-[0.99] bg-gradient-to-r from-blue-600 via-teal-600 to-emerald-600 text-white">
+            Procesar Traducción Inteligente
+        </button>
+
+        <!-- Contenedor de Errores -->
+        <div id="errorContainer" class="mt-4 p-3 bg-red-950/40 border border-red-900 text-red-300 rounded-xl text-xs font-medium hidden fade-in">
+            <p class="font-bold">⚠️ Nota del Sistema:</p>
+            <p id="errorText"></p>
+        </div>
+
+        <!-- Resultados -->
+        <div id="resultContainer" class="mt-6 pt-5 border-t border-slate-800 hidden fade-in">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-sm font-bold text-slate-300">Resultado Oficial:</h2>
+                <button id="audioBtn" onclick="playAudio()" class="hidden items-center gap-1.5 px-3 py-1 bg-amber-600 hover:bg-amber-500 rounded-lg text-xs font-semibold text-white transition duration-200 shadow-md">
+                    Escuchar Voz
+                </button>
+            </div>
+            <div id="translatedResult" class="p-4 rounded-xl mb-4 bg-emerald-950/10 border border-emerald-950 text-sm font-semibold text-white"></div>
+            <div id="dictContainer" class="bg-slate-950/40 p-4 rounded-xl border border-slate-800 space-y-3">
+                <h3 class="text-[10px] font-extrabold text-amber-400 uppercase tracking-widest">Modismos analizados:</h3>
+                <div id="termsList" class="space-y-3"></div>
+            </div>
+        </div>
+
+        <!-- Pie de página -->
+        <div class="mt-8 text-center text-[11px] text-slate-500 flex justify-between items-center border-t border-slate-800/60 pt-4">
+            <span>Desarrollado por Milton © 2026</span>
+            <a href="https://wa.me/50582617798?text=Hola%20Milton,%20quiero%20comprar%20el%20PIN%20Premium%20para%20el%20Traductor%20Nica" target="_blank" rel="noopener noreferrer" class="text-slate-400 hover:text-emerald-400 transition font-medium">Soporte & Adquirir PIN</a>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURACIONES GLOBALES
+        const API_KEY = "AQ.Ab8RN6JikQTHMa7I9sMXHUj-C_DbEAZQFaiCZtseucow8VWNgQ";
+        const SECRET_MASTER_PIN = "MILTON2026";
+        const WHATSAPP_LINK = "https://wa.me/50582617798?text=Hola%20Milton,%20quiero%20comprar%20el%20PIN%20Premium%20para%20el%20Traductor%20Nica";
+
+        let currentMode = 'nicaToStandard';
+        let isPremiumUnlocked = false;
+        let lastTranslationText = "";
+
+        // Verificar almacenamiento local al cargar
+        if (localStorage.getItem('nica_premium_unlocked') === 'true') {
+            unlockPremiumSystem();
+        }
+
+        function changeMode(mode) {
+            currentMode = mode;
+            
+            // Actualizar diseño de botones de modo
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.className = "mode-btn py-2 px-3 rounded-lg font-bold text-xs transition bg-slate-900 text-slate-400 border border-slate-800";
+            });
+            
+            const activeBtn = document.getElementById('btn-' + mode);
+            if (mode === 'nicaToEnglish') {
+                activeBtn.className = "mode-btn py-2 px-3 rounded-lg font-bold text-xs transition bg-emerald-600 text-white";
+            } else if (mode === 'usSlangToSpanish' || mode === 'englishToUsSlang') {
+                activeBtn.className = "mode-btn py-2 px-2 rounded-lg font-bold text-xs transition bg-amber-600 text-white";
+            } else {
+                activeBtn.className = "mode-btn py-2 px-3 rounded-lg font-bold text-xs transition bg-blue-600 text-white";
+            }
+
+            // Ocultar resultados previos al cambiar de modo
+            document.getElementById('resultContainer').classList.add('hidden');
+            document.getElementById('errorContainer').classList.add('hidden');
+
+            renderInputArea();
+        }
+
+        function renderInputArea() {
+            const container = document.getElementById('inputAreaContainer');
+            const actionBtn = document.getElementById('actionBtn');
+
+            if ((currentMode === 'usSlangToSpanish' || currentMode === 'englishToUsSlang') && !isPremiumUnlocked) {
+                // Mostrar interfaz de bloqueo premium
+                actionBtn.style.display = 'none';
+                container.innerHTML = `
+                    <div class="bg-slate-950 border border-amber-900/60 p-6 rounded-xl text-center space-y-4 fade-in">
+                        <h3 class="font-bold text-base text-amber-300">¡Módulo Slang & Audio Pronunciación Bloqueado!</h3>
+                        <p class="text-xs text-slate-400 max-w-md mx-auto">Traducir modismos callejeros de EE.UU. y escuchar la pronunciación nativa requiere cuenta Premium. Adquiere tu PIN mensual.</p>
+                        <div class="bg-slate-900 p-3 rounded-lg max-w-xs mx-auto border border-slate-800 space-y-2">
+                            <input type="text" id="pinInput" placeholder="Introduce tu PIN Premium" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-white text-center text-xs focus:outline-none uppercase">
+                            <button onclick="checkPin()" class="w-full py-1.5 bg-amber-600 hover:bg-amber-500 rounded-lg text-white font-bold text-xs transition">Activar Mi Acceso</button>
+                            <p id="pinErrorText" class="text-rose-400 text-[10px] font-semibold mt-1 hidden">⚠️ PIN Incorrecto.</p>
+                        </div>
+                        <div class="pt-2">
+                            <a href="${WHATSAPP_LINK}" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-xs font-bold transition shadow-lg">Solicitar PIN a Milton por WhatsApp (C$50)</a>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Mostrar cuadro normal
+                actionBtn.style.display = 'block';
+                let placeholder = 'Escribe en Español Nicaragüense (ej. "Ideay chele, ando palmado")...';
+                if (currentMode === 'standardToNica') placeholder = 'Escribe algo formal (ej. "Hola amigo, no tengo dinero")...';
+                if (currentMode === 'usSlangToSpanish') placeholder = 'Escribe jerga de EE.UU. (ej. "I\'m totally broke")...';
+                if (currentMode === 'nicaToEnglish') placeholder = 'Escribe en nica para pasarlo a inglés...';
+                if (currentMode === 'englishToUsSlang') placeholder = 'Escribe inglés estándar para pasarlo a Slang...';
+
+                container.innerHTML = `<textarea id="inputText" class="w-full p-4 bg-slate-950 border-2 border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition text-sm sm:text-base resize-none min-h-[110px]" placeholder="${placeholder}"></textarea>`;
+            }
+        }
+
+        function checkPin() {
+            const input = document.getElementById('pinInput').value.trim();
+            if (input === SECRET_MASTER_PIN) {
+                localStorage.setItem('nica_premium_unlocked', 'true');
+                unlockPremiumSystem();
+                changeMode(currentMode);
+            } else {
+                document.getElementById('pinErrorText').classList.remove('hidden');
+            }
+        }
+
+        function unlockPremiumSystem() {
+            isPremiumUnlocked = true;
+            const badge = document.getElementById('premiumBadge');
+            badge.className = "bg-amber-500/20 text-amber-400 border border-amber-500/40 text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider";
+            badge.innerHTML = `⭐ Premium Activo <button onclick="lockPremiumSystem()" class="text-rose-400 underline ml-1 text-[9px]">(Cerrar)</button>`;
+        }
+
+        function lockPremiumSystem() {
+            isPremiumUnlocked = false;
+            localStorage.removeItem('nica_premium_unlocked');
+            const badge = document.getElementById('premiumBadge');
+            badge.className = "bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[10px] px-1.5 py-0.5 rounded-md font-bold uppercase";
+            badge.innerHTML = "Acceso Nica Libre";
+            changeMode('nicaToStandard');
+        }
+
+        async function translateText() {
+            const textEl = document.getElementById('inputText');
+            if (!textEl) return;
+            const text = textEl.value.trim();
+
+            const errorContainer = document.getElementById('errorContainer');
+            const resultContainer = document.getElementById('resultContainer');
+
+            if (!text) {
+                showError('Por favor, ingresa algún texto para traducir.');
+                return;
+            }
+
+            errorContainer.classList.add('hidden');
+            resultContainer.classList.add('hidden');
+            
+            const actionBtn = document.getElementById('actionBtn');
+            actionBtn.disabled = true;
+            actionBtn.innerText = "Analizando modismos con IA...";
+
+            let prompt = '';
+            if (currentMode === 'nicaToStandard') {
+                prompt = `Traduce el siguiente texto en Español Nicaragüense a un español estándar neutro. Identifica y explica detalladamente cada término nicaragüense. Texto Original: "${text}" Devuelve estricto JSON: {"translatedText": "...", "terms": [{"term": "...", "explanation": "..."}]}`;
+            } else if (currentMode === 'standardToNica') {
+                prompt = `Traduce el siguiente texto en español estándar a un Español Nicaragüense coloquial y natural de forma auténtica. Texto Original: "${text}" Devuelve estricto JSON: {"translatedText": "...", "terms": [{"term": "...", "explanation": "..."}]}`;
+            } else if (currentMode === 'nicaToEnglish') {
+                prompt = `Translate the following Nicaraguan Spanish text into natural English. Identify and explain terms in English. Original Text: "${text}" Devuelve estricto JSON: {"translatedText": "...", "terms": [{"term": "...", "explanation": "..."}]}`;
+            } else if (currentMode === 'usSlangToSpanish') {
+                prompt = `Traduce el siguiente texto en inglés de EE.UU. (slang/idioms) a su equivalente más natural en español coloquial o nica. Texto Original: "${text}" Devuelve estricto JSON: {"translatedText": "...", "terms": [{"term": "...", "explanation": "..."}]}`;
+            } else if (currentMode === 'englishToUsSlang') {
+                prompt = `Transform the following standard English text into informal American English with heavy US slang. Original Text: "${text}" Devuelve estricto JSON: {"translatedText": "...", "terms": [{"term": "...", "explanation": "..."}]}`;
+            }
+
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            "translatedText": { "type": "STRING" },
+                            "terms": {
+                                type: "ARRAY",
+                                items: {
+                                    type: "OBJECT",
+                                    properties: {
+                                        term: { type: "STRING" },
+                                        explanation: { type: "STRING" }
+                                    },
+                                    required: ["term", "explanation"]
+                                }
+                            }
+                        },
+                        required: ["translatedText", "terms"]
+                    }
+                }
+            };
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) throw new Error(`Error de conexión con el servidor.`);
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates[0]?.content?.parts[0]?.text) {
+                    const cleanedText = result.candidates[0].content.parts[0].text.replace(/```json|```/g, '');
+                    const data = JSON.parse(cleanedText);
+                    
+                    // Renderizar Resultados
+                    document.getElementById('translatedResult').innerText = data.translatedText;
+                    lastTranslationText = currentMode === 'usSlangToSpanish' ? text : data.translatedText;
+
+                    // Lista de términos analizados
+                    const termsList = document.getElementById('termsList');
+                    termsList.innerHTML = '';
+                    if (data.terms && data.terms.length > 0) {
+                        data.terms.forEach(t => {
+                            termsList.innerHTML += `
+                                <div class="border-b border-slate-800/40 pb-2 last:border-none last:pb-0 text-xs">
+                                    <p class="font-bold text-amber-300">✨ ${t.term}</p>
+                                    <p class="text-slate-300 mt-0.5 pl-4">${t.explanation}</p>
+                                </div>
+                            `;
+                        });
+                        document.getElementById('dictContainer').style.display = 'block';
+                    } else {
+                        document.getElementById('dictContainer').style.display = 'none';
+                    }
+
+                    // Mostrar u ocultar botón de audio premium
+                    const audioBtn = document.getElementById('audioBtn');
+                    if (isPremiumUnlocked) {
+                        audioBtn.style.display = 'flex';
+                    } else {
+                        audioBtn.style.display = 'none';
+                    }
+
+                    resultContainer.classList.remove('hidden');
+                } else {
+                    showError('No se pudo procesar la traducción.');
+                }
+            } catch (err) {
+                showError(err.message || 'Error de red.');
+            } finally {
+                actionBtn.disabled = false;
+                actionBtn.innerText = "Procesar Traducción Inteligente";
+            }
+        }
+
+        function showError(msg) {
+            document.getElementById('errorText').innerText = msg;
+            document.getElementById('errorContainer').classList.remove('hidden');
+        }
+
+        function playAudio() {
+            if (!isPremiumUnlocked || !('speechSynthesis' in window) || !lastTranslationText) return;
+            
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(lastTranslationText);
+            
+            if (currentMode === 'englishToUsSlang' || currentMode === 'usSlangToSpanish') {
+                utterance.lang = 'en-US';
+            } else {
+                utterance.lang = 'es-US';
+            }
+
+            const audioBtn = document.getElementById('audioBtn');
+            utterance.onstart = () => audioBtn.innerText = "Reproduciendo...";
+            utterance.onend = () => audioBtn.innerText = "Escuchar Voz";
+            utterance.onerror = () => audioBtn.innerText = "Escuchar Voz";
+
+            window.speechSynthesis.speak(utterance);
+        }
+    </script>
+</body>
+</html>

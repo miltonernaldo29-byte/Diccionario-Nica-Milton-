@@ -81,15 +81,14 @@
         }
 
         async function translateText() {
-    alert("¡El botón funciona!");
-    const input = document.getElementById('inputText').value.trim();
-
-            if (!currentMode || !input) return;
+            const input = document.getElementById('inputText').value.trim();
+            if (!currentMode) { alert("Por favor, selecciona un modo."); return; }
+            if (!input) return;
 
             document.getElementById('resultsContainer').classList.remove('hidden');
             document.getElementById('translationContent').innerHTML = "Traduciendo...";
             
-            let instr = "Analiza el registro de la frase original (Formal o Informal). Tu primera traducción (la primera en la lista) DEBE coincidir con ese registro y destacarse. Prioriza equivalencias culturales naturales, no literales. ";
+            let instr = "Analiza el registro de la frase original. ";
             if(currentMode === 'nica-to-english') instr += "Diccionario en INGLÉS.";
 
             try {
@@ -110,11 +109,10 @@
                     </div>`).join('');
                 document.getElementById('dictionaryContent').innerHTML = data.explicacion.map(e => `<div><strong>"${e.palabra}":</strong> ${e.significado}</div>`).join('');
             } catch (e) {
-                document.getElementById('translationContent').innerHTML = "Error al conectar con el servidor.";
+                document.getElementById('translationContent').innerHTML = "Error al conectar. Verifica que el script esté publicado correctamente.";
+                console.error(e);
             }
         }
-    </script><script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-<script>eruda.init();</script>
-
+    </script>
 </body>
 </html>

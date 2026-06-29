@@ -80,12 +80,12 @@
             window.speechSynthesis.speak(speech);
         }
 
-        async function translateText() {function translateText() {
-    alert("¡El botón funciona!"); // <--- AGREGA ESTO
+        async function translateText() {
+    alert("¡El botón funciona!");
     const input = document.getElementById('inputText').value.trim();
-    // ... el resto de tu código
+    
+    // ... aquí sigue el resto de tu código ...
 
-            const input = document.getElementById('inputText').value.trim();
             if (!currentMode || !input) return;
 
             document.getElementById('resultsContainer').classList.remove('hidden');

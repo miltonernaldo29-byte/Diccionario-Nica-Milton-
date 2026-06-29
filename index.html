@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traductor Nica Milton v2.9</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { background-color: #050b14; color: #ffffff; font-family: 'Inter', sans-serif; }
+        .btn-option { transition: all 0.2s ease; }
+        .btn-active { ring: 2px; ring-color: #3b82f6; border-color: #3b82f6 !important; background-color: rgba(59, 130, 246, 0.2) !important; }
+        .premium-btn { background-color: #1e293b; border: 1px solid #334155; }
+        .glass-result { background: #ffffff; color: #1e293b; border-radius: 1rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen pb-20">
+
+    <div class="max-w-md mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8 text-blue-400">Traductor Nica Milton v2.9</h1>
+
+        <details class="mb-4 group bg-gray-900 rounded-xl border border-gray-800" open>
+            <summary class="cursor-pointer p-4 text-xs text-gray-400 font-bold flex justify-between items-center outline-none">
+                <span>OPCIONES GRATUITAS</span>
+                <i class="fas fa-chevron-down"></i>
+            </summary>
+            <div class="p-4 pt-0 space-y-3">
+                <button onclick="selectMode('nica-to-english', this)" class="btn-option w-full bg-blue-600 text-white py-3.5 rounded-xl font-semibold border border-blue-500">Nica ➔ Inglés (Low Register)</button>
+                <button onclick="selectMode('nica-to-standard', this)" class="btn-option w-full premium-btn text-white py-3.5 rounded-xl font-semibold">Nica ➔ Español Estándar</button>
+            </div>
+        </details>
+
+        <details class="mb-6 group bg-gray-900 rounded-xl border border-gray-800">
+            <summary class="cursor-pointer p-4 text-xs text-yellow-500 font-bold flex justify-between items-center outline-none">
+                <span>ACCESO PREMIUM ★</span>
+                <i class="fas fa-chevron-down"></i>
+            </summary>
+            <div class="p-4 pt-0 space-y-3">
+                <button onclick="selectMode('slang-to-nica', this, true)" class="btn-option w-full premium-btn text-white py-3.5 rounded-xl font-semibold">🇺🇸 US Slang ➔ Nica</button>
+                <button onclick="selectMode('informal-to-standard', this, true)" class="btn-option w-full premium-btn text-white py-3.5 rounded-xl font-semibold">🇺🇸 Inglés Informal ➔ Estándar</button>
+            </div>
+        </details>
+
+        <div class="bg-gray-900 rounded-xl p-1 mb-4 border border-gray-800">
+            <textarea id="inputText" class="w-full h-32 bg-transparent p-4 text-white placeholder-gray-500 outline-none resize-none text-lg" placeholder="Escribe aquí, chele..."></textarea>
+        </div>
+        
+        <button onclick="translateText()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg">Traducir con IA</button>
+
+        <div id="resultsContainer" class="hidden mt-10 space-y-6">
+            <div class="glass-result overflow-hidden">
+                <div class="bg-blue-900 text-white px-5 py-3 font-bold uppercase text-sm">Resultado de Traducción</div>
+                <div id="translationContent" class="p-5 space-y-4"></div>
+            </div>
+            <div class="glass-result overflow-hidden">
+                <div class="bg-gray-800 text-yellow-400 px-5 py-3 font-bold uppercase text-sm">Diccionario Milton H</div>
+                <div id="dictionaryContent" class="p-5 space-y-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const scriptUrl = "https://script.google.com/macros/s/AKfycbykSzcPRUz9CSUQvaDtLTDOtu_muwX66u6mm_7xQDVPlY5JjexM_4tIVHMwbhykpDqQ/exec";
+        let currentMode = "";
+        let selectedLang = "en-US";
+
+        function selectMode(mode, btn, premium = false) {
+            currentMode = mode;
+            document.querySelectorAll('.btn-option').forEach(b => b.classList.remove('btn-active', 'border-blue-500'));
+            btn.classList.add('btn-active', 'border-blue-500');
+            if (premium) alert("Contacta a Teacher Milton para obtener acceso premium por Precio único de promoción de 1.5 dólar 50582617798");
+            selectedLang = (mode === 'nica-to-english' || mode === 'informal-to-standard') ? "en-US" : "es-ES";
+        }
+
+        function playAudio(text) {
+            window.speechSynthesis.cancel();
+            const speech = new SpeechSynthesisUtterance(text);
+            speech.lang = selectedLang;
+            window.speechSynthesis.speak(speech);
+        }
+
+        async function translateText() {
+            const input = document.getElementById('inputText').value.trim();
+            if (!currentMode || !input) return;
+
+            document.getElementById('resultsContainer').classList.remove('hidden');
+            document.getElementById('translationContent').innerHTML = "Traduciendo...";
+            
+            let instr = "Analiza el registro de la frase original (Formal o Informal). Tu primera traducción (la primera en la lista) DEBE coincidir con ese registro y destacarse. Prioriza equivalencias culturales naturales, no literales. ";
+            if(currentMode === 'nica-to-english') instr += "Diccionario en INGLÉS.";
+
+            try {
+                const response = await fetch(scriptUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: input, mode: currentMode, instruction: instr })
+                });
+                const data = await response.json();
+
+                document.getElementById('translationContent').innerHTML = data.traducciones.map((t, i) => `
+                    <div class="border-b pb-2">
+                        <div class="text-xs font-bold text-gray-500 uppercase">${t.nivel}</div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-lg font-bold ${i === 0 ? 'text-blue-600' : 'text-gray-800'}">${t.resultado}</span>
+                            <button onclick="playAudio('${t.resultado.replace(/'/g, "\\'")}')" class="text-blue-500"><i class="fas fa-volume-up"></i></button>
+                        </div>
+                    </div>`).join('');
+                document.getElementById('dictionaryContent').innerHTML = data.explicacion.map(e => `<div><strong>"${e.palabra}":</strong> ${e.significado}</div>`).join('');
+            } catch (e) {
+                document.getElementById('translationContent').innerHTML = "Error al conectar con el servidor.";
+            }
+        }
+    </script>
+</body>
+</html>

@@ -108,10 +108,12 @@
                         </div>
                     </div>`).join('');
                 document.getElementById('dictionaryContent').innerHTML = data.explicacion.map(e => `<div><strong>"${e.palabra}":</strong> ${e.significado}</div>`).join('');
-            } catch (e) {
-                document.getElementById('translationContent').innerHTML = "Error al conectar. Verifica que el script esté publicado correctamente.";
-                console.error(e);
-            }
+            } catch (mi) {
+    // Esto hará que el error aparezca en pantalla en lugar de solo en la consola
+    document.getElementById('translationContent').innerHTML = "Error real: " + mi.toString();
+    console.error(mi);
+}
+
         }
     </script>
 </body>

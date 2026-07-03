@@ -80,7 +80,7 @@
             window.speechSynthesis.speak(speech);
         }
 
-        async function translateText() {
+                async function translateText() {
             const input = document.getElementById('inputText').value.trim();
             if (!currentMode) { alert("Por favor, selecciona un modo."); return; }
             if (!input) return;
@@ -94,27 +94,40 @@
             try {
                 const response = await fetch(scriptUrl, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    // Nota: Quité el 'headers' porque en Apps Script suele causar el error de CORS (Failed to fetch)
                     body: JSON.stringify({ text: input, mode: currentMode, instruction: instr })
                 });
+
+                if (!response.ok) {
+                    const textoError = await response.text();
+                    document.getElementById('translationContent').innerHTML = `<span class="text-red-500 font-bold">Error ${response.status}:</span> ${textoError}`;
+                    return;
+                }
+
                 const data = await response.json();
 
-                document.getElementById('translationContent').innerHTML = data.traducciones.map((t, i) => `
-                    <div class="border-b pb-2">
-                        <div class="text-xs font-bold text-gray-500 uppercase">${t.nivel}</div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-lg font-bold ${i === 0 ? 'text-blue-600' : 'text-gray-800'}">${t.resultado}</span>
-                            <button onclick="playAudio('${t.resultado.replace(/'/g, "\\'")}')" class="text-blue-500"><i class="fas fa-volume-up"></i></button>
-                        </div>
-                    </div>`).join('');
-                document.getElementById('dictionaryContent').innerHTML = data.explicacion.map(e => `<div><strong>"${e.palabra}":</strong> ${e.significado}</div>`).join('');
-            } catch (mi) {
-    // Esto hará que el error aparezca en pantalla en lugar de solo en la consola
-    document.getElementById('translationContent').innerHTML = "Error real: " + mi.toString();
-    console.error(mi);
-}
+                // Mostramos el resultado (solo si la IA devolvió la estructura correcta)
+                if (data.traducciones) {
+                    document.getElementById('translationContent').innerHTML = data.traducciones.map((t, i) => `
+                        <div class="border-b pb-2">
+                            <div class="text-xs font-bold text-gray-500 uppercase">${t.nivel}</div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-lg font-bold ${i === 0 ? 'text-blue-600' : 'text-gray-800'}">${t.resultado}</span>
+                                <button onclick="playAudio('${t.resultado.replace(/'/g, "\\'")}')" class="text-blue-500"><i class="fas fa-volume-up"></i></button>
+                            </div>
+                        </div>`).join('');
+                    document.getElementById('dictionaryContent').innerHTML = data.explicacion.map(e => `<div><strong>"${e.palabra}":</strong> ${e.significado}</div>`).join('');
+                } else {
+                    document.getElementById('translationContent').innerHTML = `<span class="text-yellow-600">Respuesta inesperada:</span> ${JSON.stringify(data)}`;
+                }
 
+            } catch (error) {
+                // Este es el que captura el "Failed to fetch" de forma visible
+                document.getElementById('translationContent').innerHTML = `<span class="text-red-600 font-bold">Error de conexión detectado:</span> ${error.message}. <br><br>Suele deberse a permisos de Apps Script o a un bloqueo regional.`;
+                console.error("Detalle del error:", error);
+            }
         }
+
     </script>
 </body>
 </html>

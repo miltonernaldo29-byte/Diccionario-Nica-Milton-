@@ -76,12 +76,30 @@
             document.querySelectorAll('.btn-option').forEach(b => b.classList.remove('btn-active'));
             btn.classList.add('btn-active');
             
+          // --- AGREGA ESTO ---
+    // Si el modo implica traducir a inglés, el audio debe ser "en-US"
+    // Si el modo traduce a español, el audio debe ser "es-ES"
+    if (mode === 'nica-to-english' || mode === 'english-to-standard-english') {
+        selectedLang = "en-US";
+    } else {
+        selectedLang = "es-ES";
+    }
+    // -------------------
+            
             if (premium) {
                 alert("Acceso Premium requerido. Redirigiendo a WhatsApp con Teacher Milton...");
                 window.location.href = "https://wa.me/50582617798?text=Hola%20Teacher%20Milton,%20quiero%20acceso%20Premium%20para%20el%20traductor.";
             }
         }
 
+
+          function playAudio(text) {
+            window.speechSynthesis.cancel();
+            const speech = new SpeechSynthesisUtterance(text);
+            speech.lang = selectedLang;
+            window.speechSynthesis.speak(speech);
+        }
+      
         async function translateText() {
             const input = document.getElementById('inputText').value.trim();
             const clave = document.getElementById('clavePremium').value.trim();

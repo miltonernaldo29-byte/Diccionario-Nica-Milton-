@@ -9,7 +9,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body { background-color: #050b14; color: #ffffff; font-family: 'Inter', sans-serif; }
-        .btn-option { transition: all 0.2s ease; }
         .btn-active { ring: 2px; ring-color: #3b82f6; border-color: #3b82f6 !important; background-color: rgba(59, 130, 246, 0.2) !important; }
         .premium-btn { background-color: #1e293b; border: 1px solid #334155; }
         .glass-result { background: #ffffff; color: #1e293b; border-radius: 1rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); }
@@ -20,14 +19,20 @@
     <div class="max-w-md mx-auto">
         <h1 class="text-3xl font-bold text-center mb-8 text-blue-400">Traductor Nica Milton v2.9</h1>
 
+        <!-- Cuadro de Clave Premium -->
+        <div class="mb-6 p-4 bg-gray-800 rounded-xl border border-gray-700">
+            <label class="text-xs text-gray-400 font-bold uppercase">Clave Premium (Si tienes una):</label>
+            <input type="text" id="clavePremium" placeholder="Ingresa tu clave aquí" class="w-full mt-2 bg-gray-900 border border-gray-600 rounded-lg p-3 text-white placeholder-gray-500 outline-none">
+        </div>
+
         <details class="mb-4 group bg-gray-900 rounded-xl border border-gray-800" open>
             <summary class="cursor-pointer p-4 text-xs text-gray-400 font-bold flex justify-between items-center outline-none">
                 <span>OPCIONES GRATUITAS</span>
                 <i class="fas fa-chevron-down"></i>
             </summary>
             <div class="p-4 pt-0 space-y-3">
-                <button onclick="selectMode('nica-to-english', this)" class="btn-option w-full bg-blue-600 text-white py-3.5 rounded-xl font-semibold border border-blue-500">Nica ➔ Inglés (Low Register)</button>
-                <button onclick="selectMode('nica-to-standard', this)" class="btn-option w-full premium-btn text-white py-3.5 rounded-xl font-semibold">Nica ➔ Español Estándar</button>
+                <button onclick="selectMode('nica-to-english', this)" class="btn-option w-full bg-blue-600 text-white py-3.5 rounded-xl font-semibold border border-blue-500">Nica ➔ Inglés</button>
+                <button onclick="selectMode('nica-to-spanish', this)" class="btn-option w-full premium-btn text-white py-3.5 rounded-xl font-semibold">Nica ➔ Español Estándar</button>
             </div>
         </details>
 
@@ -37,20 +42,20 @@
                 <i class="fas fa-chevron-down"></i>
             </summary>
             <div class="p-4 pt-0 space-y-3">
-                <button onclick="selectMode('slang-to-nica', this, true)" class="btn-option w-full premium-btn text-white py-3.5 rounded-xl font-semibold">🇺🇸 US Slang ➔ Nica</button>
-                <button onclick="selectMode('informal-to-standard', this, true)" class="btn-option w-full premium-btn text-white py-3.5 rounded-xl font-semibold">🇺🇸 Inglés Informal ➔ Estándar</button>
+                <button onclick="selectMode('english-to-nica', this, true)" class="btn-option w-full premium-btn text-white py-3.5 rounded-xl font-semibold">🇺🇸 US Slang ➔ Nica</button>
+                <button onclick="selectMode('english-to-standard-english', this, true)" class="btn-option w-full premium-btn text-white py-3.5 rounded-xl font-semibold">🇺🇸 Inglés ➔ Estándar</button>
             </div>
         </details>
 
         <div class="bg-gray-900 rounded-xl p-1 mb-4 border border-gray-800">
-            <textarea id="inputText" class="w-full h-32 bg-transparent p-4 text-white placeholder-gray-500 outline-none resize-none text-lg" placeholder="Escribe aquí, chele..."></textarea>
+            <textarea id="inputText" class="w-full h-32 bg-transparent p-4 text-white placeholder-gray-500 outline-none resize-none text-lg" placeholder="Escribe aquí..."></textarea>
         </div>
         
         <button onclick="translateText()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg">Traducir con IA</button>
 
         <div id="resultsContainer" class="hidden mt-10 space-y-6">
             <div class="glass-result overflow-hidden">
-                <div class="bg-blue-900 text-white px-5 py-3 font-bold uppercase text-sm">Resultado de Traducción</div>
+                <div class="bg-blue-900 text-white px-5 py-3 font-bold uppercase text-sm">Resultado</div>
                 <div id="translationContent" class="p-5 space-y-4"></div>
             </div>
             <div class="glass-result overflow-hidden">
@@ -63,71 +68,52 @@
     <script>
         const scriptUrl = "https://script.google.com/macros/s/AKfycbwp3Y_6ZZjLeEeitYUORSfkc_UEzXMTI5nxZ56K0A0Ff9TiSNI1mUDdc6tgJ1-LGsB4hw/exec";
         let currentMode = "";
-        let selectedLang = "en-US";
+        let isPremiumMode = false;
 
         function selectMode(mode, btn, premium = false) {
             currentMode = mode;
-            document.querySelectorAll('.btn-option').forEach(b => b.classList.remove('btn-active', 'border-blue-500'));
-            btn.classList.add('btn-active', 'border-blue-500');
-            if (premium) alert("Contacta a Teacher Milton para obtener acceso premium por Precio único de promoción de 1.5 dólar 50582617798");
-            selectedLang = (mode === 'nica-to-english' || mode === 'informal-to-standard') ? "en-US" : "es-ES";
+            isPremiumMode = premium;
+            document.querySelectorAll('.btn-option').forEach(b => b.classList.remove('btn-active'));
+            btn.classList.add('btn-active');
+            
+            if (premium) {
+                alert("Acceso Premium requerido. Redirigiendo a WhatsApp con Teacher Milton...");
+                window.location.href = "https://wa.me/50582617798?text=Hola%20Teacher%20Milton,%20quiero%20acceso%20Premium%20para%20el%20traductor.";
+            }
         }
 
-        function playAudio(text) {
-            window.speechSynthesis.cancel();
-            const speech = new SpeechSynthesisUtterance(text);
-            speech.lang = selectedLang;
-            window.speechSynthesis.speak(speech);
-        }
-
-                async function translateText() {
+        async function translateText() {
             const input = document.getElementById('inputText').value.trim();
-            if (!currentMode) { alert("Por favor, selecciona un modo."); return; }
+            const clave = document.getElementById('clavePremium').value.trim();
+            if (!currentMode) { alert("Selecciona un modo primero."); return; }
             if (!input) return;
 
             document.getElementById('resultsContainer').classList.remove('hidden');
             document.getElementById('translationContent').innerHTML = "Traduciendo...";
             
-            let instr = "Analiza el registro de la frase original. ";
-            if(currentMode === 'nica-to-english') instr += "Diccionario en INGLÉS.";
-
             try {
                 const response = await fetch(scriptUrl, {
                     method: 'POST',
-                    // Nota: Quité el 'headers' porque en Apps Script suele causar el error de CORS (Failed to fetch)
-                    body: JSON.stringify({ text: input, mode: currentMode, instruction: instr })
+                    body: JSON.stringify({ 
+                        text: input, 
+                        mode: currentMode, 
+                        isPremium: isPremiumMode, 
+                        clave: clave 
+                    })
                 });
-
-                if (!response.ok) {
-                    const textoError = await response.text();
-                    document.getElementById('translationContent').innerHTML = `<span class="text-red-500 font-bold">Error ${response.status}:</span> ${textoError}`;
-                    return;
-                }
-
                 const data = await response.json();
-
-                // Mostramos el resultado (solo si la IA devolvió la estructura correcta)
-                if (data.traducciones) {
-                    document.getElementById('translationContent').innerHTML = data.traducciones.map((t, i) => `
-                        <div class="border-b pb-2">
-                            <div class="text-xs font-bold text-gray-500 uppercase">${t.nivel}</div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-lg font-bold ${i === 0 ? 'text-blue-600' : 'text-gray-800'}">${t.resultado}</span>
-                                <button onclick="playAudio('${t.resultado.replace(/'/g, "\\'")}')" class="text-blue-500"><i class="fas fa-volume-up"></i></button>
-                            </div>
-                        </div>`).join('');
-                    document.getElementById('dictionaryContent').innerHTML = data.explicacion.map(e => `<div><strong>"${e.palabra}":</strong> ${e.significado}</div>`).join('');
-                } else {
-                    document.getElementById('translationContent').innerHTML = `<span class="text-yellow-600">Respuesta inesperada:</span> ${JSON.stringify(data)}`;
-                }
-
-            } catch (error) {
-                // Este es el que captura el "Failed to fetch" de forma visible
-                document.getElementById('translationContent').innerHTML = `<span class="text-red-600 font-bold">Error de conexión detectado:</span> ${error.message}. <br><br>Suele deberse a permisos de Apps Script o a un bloqueo regional.`;
-                console.error("Detalle del error:", error);
+                
+                document.getElementById('translationContent').innerHTML = data.traducciones.map((t, i) => `
+                    <div class="border-b pb-2">
+                        <div class="text-xs font-bold text-gray-500 uppercase">${t.nivel}</div>
+                        <div class="text-lg font-bold ${i === 0 ? 'text-blue-600' : 'text-gray-800'}">${t.resultado}</div>
+                    </div>`).join('');
+                document.getElementById('dictionaryContent').innerHTML = data.explicacion.map(e => `<div><strong>"${e.palabra}":</strong> ${e.significado}</div>`).join('');
+            } catch (err) {
+                document.getElementById('translationContent').innerHTML = "Error: " + err.message;
             }
         }
-
     </script>
 </body>
 </html>
+

@@ -86,11 +86,18 @@
     }
     // -------------------
             
-            if (premium) {
-                alert("Acceso Premium requerido. Redirigiendo a WhatsApp con Teacher Milton...");
-                window.location.href = "https://wa.me/50582617798?text=Hola%20Teacher%20Milton,%20quiero%20acceso%20Premium%20para%20el%20traductor.";
+                     if (premium) {
+            const claveIngresada = document.getElementById('clavePremium').value.trim();
+            
+            // Si NO hay clave ingresada, mandamos a WhatsApp
+            if (claveIngresada === "") {
+                alert("Acceso Premium requerido. Redirigiendo a WhatsApp...");
+                window.location.href = "https://wa.me/50582617798?text=Hola%20Teacher%20Milton,%20quiero%20acceso%20Premium.";
+            } else {
+                // Si SÍ hay clave, NO lo mandamos, solo avisamos que la clave será validada al traducir
+                console.log("Clave detectada, procediendo a verificar...");
             }
-        }
+                     }
 
 
           function playAudio(text) {

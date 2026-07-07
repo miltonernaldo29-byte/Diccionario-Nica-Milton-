@@ -130,7 +130,7 @@
                 });
                 const data = await response.json();
                 
-                document.getElementById('contenido de traducción').innerHTML = datos.traducciones.map((t, i) => `
+                document.getElementById('contenido de traducción').innerHTML = data.traducciones.map((t, i) => `
     <div class="border-b pb-2 flex justify-between items-center">
         <div>
             <div class="text-xs font-bold text-gray-500 uppercase">${t.nivel}</div>

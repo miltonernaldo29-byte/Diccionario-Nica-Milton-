@@ -136,7 +136,7 @@
             <div class="text-xs font-bold text-gray-500 uppercase">${t.nivel}</div>
             <div class="text-lg font-bold ${i === 0 ? 'text-blue-600' : 'text-gray-800'}">${t.resultado}</div>
         </div>
-        <button onclick="reproducirAudio('${t.resultado.replace(/'/g, "\\'")}')" class="text-blue-500 p-2 text-xl">
+        <button onclick="playAudio('${t.resultado.replace(/'/g, "\\'")}')" class="text-blue-500 p-2 text-xl">
             🔊
         </button>
     </div>`).join('');

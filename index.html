@@ -130,11 +130,17 @@
                 });
                 const data = await response.json();
                 
-                document.getElementById('translationContent').innerHTML = data.traducciones.map((t, i) => `
-                    <div class="border-b pb-2">
-                        <div class="text-xs font-bold text-gray-500 uppercase">${t.nivel}</div>
-                        <div class="text-lg font-bold ${i === 0 ? 'text-blue-600' : 'text-gray-800'}">${t.resultado}</div>
-                    </div>`).join('');
+                document.getElementById('contenido de traducción').innerHTML = datos.traducciones.map((t, i) => `
+    <div class="border-b pb-2 flex justify-between items-center">
+        <div>
+            <div class="text-xs font-bold text-gray-500 uppercase">${t.nivel}</div>
+            <div class="text-lg font-bold ${i === 0 ? 'text-blue-600' : 'text-gray-800'}">${t.resultado}</div>
+        </div>
+        <button onclick="reproducirAudio('${t.resultado.replace(/'/g, "\\'")}')" class="text-blue-500 p-2 text-xl">
+            🔊
+        </button>
+    </div>`).join('');
+
                 document.getElementById('dictionaryContent').innerHTML = data.explicacion.map(e => `<div><strong>"${e.palabra}":</strong> ${e.significado}</div>`).join('');
             } catch (err) {
                 document.getElementById('translationContent').innerHTML = "Error: " + err.message;

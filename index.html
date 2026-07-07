@@ -47,9 +47,15 @@
             </div>
         </details>
 
-        <div class="bg-gray-900 rounded-xl p-1 mb-4 border border-gray-800">
-            <textarea id="inputText" class="w-full h-32 bg-transparent p-4 text-white placeholder-gray-500 outline-none resize-none text-lg" placeholder="Escribe aquí..."></textarea>
-        </div>
+        <div class="bg-gray-900 rounded-xl p-1 mb-4 border border-gray-800 relative">
+    <textarea id="inputText" class="w-full h-32 bg-transparent p-4 text-white placeholder-gray-500 outline-none resize-none text-lg" placeholder="Escribe aquí..."></textarea>
+    
+    <!-- Botón de micrófono pequeño y rojo -->
+    <button onclick="startVoiceRecognition()" class="absolute bottom-2 right-2 text-red-500 text-xl p-2 z-10">
+        <i class="fas fa-microphone"></i>
+    </button>
+</div>
+
         
         <button onclick="translateText()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg">Traducción inteligente</button>
 
@@ -146,6 +152,22 @@
                 document.getElementById('translationContent').innerHTML = "Error: " + err.message;
             }
         }
+    function startVoiceRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) { alert("Tu navegador no soporta voz."); return; }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = selectedLang; 
+
+    recognition.onstart = () => { document.getElementById('inputText').placeholder = "Escuchando..."; };
+    recognition.onresult = (event) => { 
+        document.getElementById('inputText').value = event.results[0][0].transcript; 
+        document.getElementById('inputText').placeholder = "Escribe aquí...";
+    };
+    recognition.onerror = () => { document.getElementById('inputText').placeholder = "Escribe aquí..."; };
+    
+    recognition.start();
+    }
     </script>
 </body>
 </html>

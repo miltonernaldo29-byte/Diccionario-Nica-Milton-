@@ -167,6 +167,23 @@
     recognition.onerror = () => { document.getElementById('inputText').placeholder = "Escribe aquí..."; };
     
     recognition.start();
+    }// 1. Esta función clasifica el modo para que la IA sepa qué idioma esperar
+    function obtenerDestinoSegunModo(modo) {
+        if (modo === "nica-to-english") return "Inglés";
+        if (modo === "nica-to-spanish") return "Español";
+        if (modo === "english-to-nica") return "Español Nicaragüense";
+        if (modo === "english-to-standard-english") return "Inglés Estándar";
+        return "";
+    }
+
+    // 2. Esta función es la que llama al servidor (code.gs)
+    function enviarTextoAlServidor() {
+        var texto = document.getElementById("tu-input").value;
+        var modo = document.getElementById("tu-selector-modo").value;
+        var destinoDefinido = obtenerDestinoSegunModo(modo);
+
+        // Enviamos tanto el texto como el destino para que la IA sea el "juez"
+        google.script.run.withSuccessHandler(mostrarRespuesta).procesarTraduccion(texto, destinoDefinido);
     }
     </script>
 </body>

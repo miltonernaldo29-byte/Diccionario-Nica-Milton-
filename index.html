@@ -120,6 +120,8 @@
             const clave = document.getElementById('clavePremium').value.trim();
             if (!currentMode) { alert("Selecciona un modo primero."); return; }
             if (!input) return;
+            
+const destinoDefinido = obtenerDestinoSegunModo(currentMode);
 
             document.getElementById('resultsContainer').classList.remove('hidden');
             document.getElementById('translationContent').innerHTML = "Traduciendo...";
@@ -130,6 +132,7 @@
                     body: JSON.stringify({ 
                         text: input, 
                         mode: currentMode, 
+                        destino: destinoDefinido,
                         isPremium: isPremiumMode, 
                         clave: clave 
                     })
@@ -176,15 +179,6 @@
         return "";
     }
 
-    // 2. Esta función es la que llama al servidor (code.gs)
-    function enviarTextoAlServidor() {
-        var texto = document.getElementById("tu-input").value;
-        var modo = document.getElementById("tu-selector-modo").value;
-        var destinoDefinido = obtenerDestinoSegunModo(modo);
-
-        // Enviamos tanto el texto como el destino para que la IA sea el "juez"
-        google.script.run.withSuccessHandler(mostrarRespuesta).procesarTraduccion(texto, destinoDefinido);
-    }
     </script>
 </body>
 </html>

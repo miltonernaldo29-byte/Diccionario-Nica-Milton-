@@ -137,7 +137,22 @@ const destinoDefinido = obtenerDestinoSegunModo(currentMode);
                         clave: clave 
                     })
                 });
-                const data = await response.json();
+                // Reemplazo de la línea 140:
+const textoRespuesta = await response.text();
+let data;
+try {
+    data = JSON.parse(textoRespuesta);
+} catch (e) {
+    document.getElementById('translationContent').innerHTML = textoRespuesta;
+    return;
+}
+
+if (data.error) {
+    alert(data.error);
+    document.getElementById('translationContent').innerHTML = "Atención: " + data.error;
+    return;
+}
+
                 
                 document.getElementById('translationContent').innerHTML = data.traducciones.map((t, i) => `
     <div class="border-b pb-2 flex justify-between items-center">
